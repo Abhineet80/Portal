@@ -1,0 +1,886 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SmartSchool Portal — Full</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{--bg:#f6f8fb;--card:#ffffff;--muted:#6b7280;--accent:#2563eb;--danger:#ef4444}
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui;margin:0;background:var(--bg);color:#0f172a}
+    header{background:linear-gradient(90deg,#0f172a,#2563eb);color:white;padding:28px 32px;display:flex;align-items:center;justify-content:space-between}
+    .brand{display:flex;gap:12px;align-items:center}
+    .brand h1{margin:0;font-size:22px}
+    .brand small{color:#dbeafe}
+    button{background:var(--accent);color:#fff;border:0;padding:10px 16px;border-radius:8px;cursor:pointer}
+    button.ghost{background:transparent;color:white;border:1px solid rgba(255,255,255,0.18)}
+    button.danger{background:var(--danger)}
+    input,select,textarea{padding:10px 12px;border:1px solid #e6eef8;border-radius:8px;width:100%;font-family:inherit}
+    .card{background:var(--card);padding:20px;border-radius:14px;box-shadow:0 6px 20px rgba(2,6,23,0.08);margin-top:14px}
+    .container{max-width:1200px;margin:0 auto;padding:28px}
+    .grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+    .hidden{display:none}
+    table{width:100%;border-collapse:collapse;margin-top:10px}
+    th,td{padding:8px;border-bottom:1px solid #eef2f7;text-align:left}
+    .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+    footer{padding:18px 32px;color:var(--muted);font-size:13px;text-align:center}
+    .muted{color:var(--muted)}
+    .small{font-size:13px;color:var(--muted)}
+    .inline{display:flex;gap:8px;align-items:center}
+    .pill{background:#eef2ff;padding:6px 10px;border-radius:999px;color:#1e3a8a;font-weight:600}
+    label{font-size:14px;display:block;margin-top:8px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div style="width:46px;height:46px;border-radius:10px;background:white;color:#1d4ed8;display:flex;align-items:center;justify-content:center;font-weight:700">SS</div>
+      <div>
+        <h1>SmartSchool Portal</h1>
+        <small>Student • Parent • Admin</small>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px">
+      <button id="home-btn" class="ghost">Home</button>
+      <button id="open-login" class="">Login</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- LANDING / HOME -->
+    <section id="home-section">
+      <div class="card">
+        <h2>Welcome to SmartSchool</h2>
+        <p class="muted">Unified portal: attendance, marks, timetables, complaints, leave requests and admin analytics. Use demo flows or connect to your backend APIs.</p>
+        <div style="margin-top:16px;display:flex;gap:12px">
+          <button id="go-login">Login</button>
+          <button id="demo-login" class="ghost">Demo Login</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- LOGIN -->
+    <section id="login-section" class="card hidden" style="max-width:540px;margin:18px auto">
+      <h2>Login</h2>
+      <form id="login-form">
+        <label>Email</label>
+        <input id="email" type="email" placeholder="you@school.edu" required>
+        <label>Password</label>
+        <input id="password" type="password" placeholder="••••••" required>
+        <label>Role</label>
+        <select id="role">
+          <option value="student">Student</option>
+          <option value="parent">Parent</option>
+          <option value="admin">Admin</option>
+        </select>
+
+        <div id="usn-field" class="hidden">
+          <label>USN</label>
+          <input id="usn" placeholder="Enter USN e.g. 2BL20CS001">
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button type="submit">Sign in</button>
+          <button type="button" id="fill-demo" class="ghost">Fill demo creds</button>
+        </div>
+        <div class="small" style="margin-top:10px">This is a frontend demo — connect to <code>/api/login</code> on your backend for production.</div>
+      </form>
+    </section>
+
+    <!-- DASHBOARDS -->
+    <section id="dashboards" class="hidden">
+      <div class="toolbar">
+        <div>Logged in as <strong id="user-role-label"></strong> <span id="user-email-label" class="small"></span></div>
+        <div style="display:flex;gap:8px">
+          <button id="to-home" class="ghost">Home</button>
+          <button id="logout">Logout</button>
+        </div>
+      </div>
+
+      <!-- STUDENT -->
+      <div id="student-dashboard" class="hidden">
+        <h2>Student Dashboard</h2>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Attendance Report</h3>
+            <div class="small">Select date range to view attendance %</div>
+            <label>From</label><input type="date" id="stu-att-from">
+            <label>To</label><input type="date" id="stu-att-to">
+            <div style="margin-top:10px;display:flex;gap:8px">
+              <button id="stu-view-att">View</button>
+            </div>
+            <div id="stu-att-result" class="muted" style="margin-top:12px">--</div>
+            <div style="margin-top:12px">
+              <h4>Recorded Presence Dates</h4>
+              <div id="stu-att-list" class="small muted"></div>
+              <div style="margin-top:8px">
+                <label>Add presence for date</label>
+                <input type="date" id="stu-add-att">
+                <button id="stu-add-att-btn">Mark Present</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Marks & Timetable</h3>
+            <table id="stu-marks-table">
+              <thead><tr><th>Subject</th><th>Marks</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div class="card">
+            <h3>Complaint / Leave</h3>
+            <label>Complaint (optional)</label>
+            <textarea id="stu-complaint" rows="3" placeholder="e.g., Bus driver is late every day"></textarea>
+            <button id="stu-submit-complaint" style="margin-top:8px">Submit Complaint</button>
+
+            <div style="margin-top:12px">
+              <label>Request Leave: Start</label><input type="date" id="stu-leave-start">
+              <label>End</label><input type="date" id="stu-leave-end">
+              <label>Reason</label><input id="stu-leave-reason" placeholder="Reason for leave">
+              <div style="margin-top:8px;display:flex;gap:8px">
+                <button id="stu-submit-leave">Request Leave</button>
+              </div>
+            </div>
+            <div id="stu-msg" class="small muted" style="margin-top:8px"></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:18px">
+          <h3>Performance (Chart)</h3>
+          <canvas id="stu-chart" height="120"></canvas>
+        </div>
+      </div>
+
+      <!-- PARENT -->
+<div id="parent-dashboard" class="hidden">
+  <h2>Parent Dashboard</h2>
+  <div class="grid-3">
+    <div class="card">
+      <h3>Your Child</h3>
+      <div class="small">Child USN: <strong id="par-child-usn"></strong> — <span id="par-child-name" class="muted"></span></div>
+      <div style="margin-top:10px">
+        <button id="par-view-att">View Attendance</button>
+        <button id="par-view-marks">View Marks</button>
+      </div>
+      <div id="par-att-result" class="muted" style="margin-top:10px"></div>
+
+      <!-- ✅ Added Marks Table for Parent -->
+      <div style="margin-top:14px">
+        <h4>Marks</h4>
+        <table id="parent-marks">
+          <thead>
+            <tr><th>Subject</th><th>Marks</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Submit Complaint / Query</h3>
+      <textarea id="par-complaint" rows="3" placeholder="Write complaint or query"></textarea>
+      <button id="par-submit-complaint" style="margin-top:8px">Send Complaint</button>
+    </div>
+
+    <div class="card">
+      <h3>Leave Request for Child</h3>
+      <label>Start</label><input type="date" id="par-leave-start">
+      <label>End</label><input type="date" id="par-leave-end">
+      <label>Reason</label><input id="par-leave-reason" placeholder="Reason">
+      <button id="par-submit-leave" style="margin-top:8px">Submit Leave</button>
+      <div id="par-msg" class="small muted" style="margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+
+
+      <!-- ADMIN -->
+      <div id="admin-dashboard" class="hidden">
+        <h2>Admin Dashboard</h2>
+        <div class="grid-3">
+          <div class="card">
+            <h3>Create / Delete Student USN</h3>
+            <label>Student Name</label><input id="adm-stu-name" placeholder="Student Name">
+            <label>USN</label><input id="adm-stu-usn" placeholder="2BL20CS001">
+            <div style="margin-top:8px;display:flex;gap:8px">
+              <button id="adm-create-usn">Create</button>
+              <button id="adm-delete-usn" class="danger">Delete</button>
+            </div>
+            <div id="adm-usn-msg" class="small muted" style="margin-top:8px"></div>
+            <hr style="margin-top:12px;border:none;border-top:1px solid #eef2f7">
+            <h4>Bulk Upload CSV</h4>
+            <div class="small muted">CSV format: header row with columns: usn,name,Subject1,Subject2,...,attendance (semicolon-separated dates, optional)<br>Example: 2BL20CS001,Alice,78,85,80,82,88,2025-02-01;2025-02-03</div>
+            <textarea id="adm-csv" rows="5" placeholder="Paste CSV here"></textarea>
+            <button id="adm-upload-csv" style="margin-top:8px">Upload CSV</button>
+          </div>
+
+          <div class="card">
+            <h3>Search & Modify Marks / Attendance</h3>
+            <label>Search USN</label><input id="adm-search-usn" placeholder="Enter USN">
+            <div style="margin-top:8px;display:flex;gap:8px">
+              <button id="adm-search">Search</button>
+            </div>
+
+            <div id="adm-marks-section" class="hidden" style="margin-top:12px">
+              <h4>Marks for <span id="adm-selected-usn"></span> — <span id="adm-selected-name" class="muted"></span></h4>
+              <table id="adm-marks-table">
+                <thead><tr><th>Subject</th><th>Marks</th></tr></thead>
+                <tbody></tbody>
+              </table>
+              <button id="adm-save-marks" style="margin-top:8px">Save Marks</button>
+
+              <div style="margin-top:12px">
+                <h4>Attendance Records</h4>
+                <div id="adm-att-list" class="small muted"></div>
+                <label>Add presence date</label><input type="date" id="adm-add-att">
+                <button id="adm-add-att-btn" style="margin-top:6px">Add Presence</button>
+                <div style="margin-top:8px">
+                  <label>Remove presence date (exact)</label><input type="date" id="adm-remove-att">
+                  <button id="adm-remove-att-btn" style="margin-top:6px">Remove</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Analytics</h3>
+            <canvas id="admin-att-chart" height="140"></canvas>
+            <canvas id="admin-marks-chart" height="140" style="margin-top:12px"></canvas>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:18px">
+          <h3>Complaints (AI-classified)</h3>
+          <div style="display:flex;gap:8px;align-items:center">
+            <label>Filter by category</label>
+            <select id="complaint-filter">
+              <option value="all">All</option>
+              <option value="Transport">Transport</option>
+              <option value="Bullying">Bullying</option>
+              <option value="Facilities">Facilities</option>
+              <option value="Fees">Fees</option>
+              <option value="Leave">Leave</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <table id="complaints-table">
+            <thead><tr><th>USN</th><th>Text</th><th>Category</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h3>Leave Requests</h3>
+          <table id="leaves-table">
+            <thead><tr><th>USN</th><th>From</th><th>To</th><th>Reason</th><th>By</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <footer>SmartSchool Portal • Demo • Data stored locally in your browser</footer>
+
+<script>
+/* ---------------------------
+  Data structures & persistence
+  - studentDB: { USN: { name: string, marks: {sub:mark,...}, attendance: [ 'YYYY-MM-DD', ... ] } }
+  - complaints: [ { usn, text, category, timestamp, by } ]
+  - leaves: [ { usn, start, end, reason, by, timestamp } ]
+  --------------------------- */
+const DEFAULT_SUBJECTS = ['Computer Networks','DBMS','Operating Systems','Microcontroller','AI & ML'];
+
+function load(key, def) { return JSON.parse(localStorage.getItem(key) || JSON.stringify(def)); }
+function save(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+
+let studentDB = load('studentDB', {});
+let complaints = load('complaints', []);
+let leaves = load('leaveRequests', []);
+
+/* ---------------------------
+  Small demo users & demo login helper
+--------------------------- */
+const demoUsers = [
+  {email:'student@example.com',password:'student123',role:'student',usn:'2BL20CS001'},
+  {email:'parent@example.com',password:'parent123',role:'parent',usn:'2BL20CS001'},
+  {email:'admin@example.com',password:'admin123',role:'admin'}
+];
+
+function classifyComplaint(text){
+  const t = text.toLowerCase();
+  if(/bus|driver|transport|late/.test(t)) return 'Transport';
+  if(/bully|bullying|harass|tease/.test(t)) return 'Bullying';
+  if(/toilet|water|facility|broken|infrastructure|classroom/.test(t)) return 'Facilities';
+  if(/fee|tuition|payment/.test(t)) return 'Fees';
+  if(/leave request|leave/.test(t)) return 'Leave';
+  return 'Other';
+}
+
+/* ---------------------------
+  UI element refs
+--------------------------- */
+const homeSection = document.getElementById('home-section');
+const loginSection = document.getElementById('login-section');
+const dashboards = document.getElementById('dashboards');
+const roleSelect = document.getElementById('role');
+const usnField = document.getElementById('usn-field');
+const openLogin = document.getElementById('open-login');
+const goLogin = document.getElementById('go-login');
+const demoLoginBtn = document.getElementById('demo-login');
+const fillDemo = document.getElementById('fill-demo');
+const homeBtn = document.getElementById('home-btn');
+const toHome = document.getElementById('to-home');
+
+/* top labels */
+const userRoleLabel = document.getElementById('user-role-label');
+const userEmailLabel = document.getElementById('user-email-label');
+
+/* Dashboards */
+const studentDash = document.getElementById('student-dashboard');
+const parentDash = document.getElementById('parent-dashboard');
+const adminDash = document.getElementById('admin-dashboard');
+
+let loggedRole = null;
+let loggedEmail = null;
+let loggedUSN = null;
+
+/* ---------------------------
+  Helpers: date & attendance calculations
+--------------------------- */
+function parseDate(s){ // s format 'YYYY-MM-DD'
+  const p = s.split('-'); return new Date(Number(p[0]),Number(p[1])-1,Number(p[2]));
+}
+function formatDate(d){
+  const yyyy = d.getFullYear(); const mm = String(d.getMonth()+1).padStart(2,'0'); const dd = String(d.getDate()).padStart(2,'0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+function daysBetween(a,b){
+  const oneDay = 24*60*60*1000;
+  return Math.round((b - a)/oneDay);
+}
+function countDaysInclusive(a,b){
+  return daysBetween(a,b) + 1;
+}
+function isDateInRange(dateStr, fromStr, toStr){
+  if(!dateStr) return false;
+  const d = parseDate(dateStr), f = parseDate(fromStr), t = parseDate(toStr);
+  return d>=f && d<=t;
+}
+
+/* compute attendance % for date range:
+   - total days = inclusive days between from and to
+   - present days = number of recorded presence dates in that range
+   - percent = present/total*100
+*/
+function computeAttendancePercent(usn, fromStr, toStr){
+  const stu = studentDB[usn];
+  if(!stu) return null;
+  const totalDays = countDaysInclusive(parseDate(fromStr), parseDate(toStr));
+  if(totalDays <= 0) return 0;
+  const present = (stu.attendance || []).filter(d => isDateInRange(d, fromStr, toStr)).length;
+  return Math.round((present/totalDays)*100);
+}
+
+/* ---------------------------
+  Show/hide USN field for student/parent
+--------------------------- */
+roleSelect.addEventListener('change',()=>{
+  const r = roleSelect.value;
+  usnField.classList.toggle('hidden', !(r==='student'||r==='parent'));
+});
+
+/* navigation home/login */
+openLogin.addEventListener('click', ()=>{ showSection('login'); });
+goLogin.addEventListener('click', ()=>{ showSection('login'); });
+homeBtn.addEventListener('click', ()=>{ showSection('home'); });
+toHome.addEventListener('click', ()=>{ showSection('home'); });
+
+function showSection(name){
+  if(name==='home'){ homeSection.classList.remove('hidden'); loginSection.classList.add('hidden'); dashboards.classList.add('hidden'); }
+  else if(name==='login'){ homeSection.classList.add('hidden'); loginSection.classList.remove('hidden'); dashboards.classList.add('hidden'); }
+}
+
+/* initial */
+showSection('home');
+
+/* ---------------------------
+  Login handling (demo frontend)
+--------------------------- */
+document.getElementById('login-form').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim();
+  const role = document.getElementById('role').value;
+  const usn = document.getElementById('usn').value.trim();
+
+  // Demo check: match demoUsers if present, otherwise allow (frontend demo)
+  const demo = demoUsers.find(u=>u.email===email && u.role===role);
+  if(demo && demo.password && document.getElementById('password').value !== demo.password){
+    return alert('Invalid password for demo user');
+  }
+
+  loggedRole = role; loggedEmail = email; loggedUSN = usn || null;
+  userRoleLabel.textContent = role.toUpperCase();
+  userEmailLabel.textContent = email ? ` — ${email}` : '';
+
+  loginSection.classList.add('hidden');
+  homeSection.classList.add('hidden');
+  dashboards.classList.remove('hidden');
+
+  studentDash.classList.add('hidden'); parentDash.classList.add('hidden'); adminDash.classList.add('hidden');
+
+  if(role==='student'){ studentDash.classList.remove('hidden'); loadStudentView(loggedUSN); }
+  else if(role==='parent'){ parentDash.classList.remove('hidden'); loadParentView(loggedUSN); }
+  else if(role==='admin'){ adminDash.classList.remove('hidden'); renderAdminOverview(); renderComplaintsTable(); renderLeavesTable(); }
+});
+
+fillDemo.addEventListener('click', ()=>{
+  document.getElementById('email').value = 'student@example.com';
+  document.getElementById('password').value = 'student123';
+  document.getElementById('role').value = 'student';
+  roleSelect.dispatchEvent(new Event('change'));
+  document.getElementById('usn').value = '2BL20CS001';
+});
+demoLoginBtn.addEventListener('click', ()=>{
+  const r = prompt('Demo login as (student, parent, admin):', 'student');
+  if(!r) return;
+  const d = demoUsers.find(u=>u.role===r);
+  if(!d) return alert('No demo for that role');
+  document.getElementById('email').value = d.email;
+  document.getElementById('password').value = d.password || '';
+  document.getElementById('role').value = d.role;
+  roleSelect.dispatchEvent(new Event('change'));
+  document.getElementById('usn').value = d.usn || '';
+  document.getElementById('login-form').dispatchEvent(new Event('submit'));
+});
+
+/* logout */
+document.getElementById('logout').addEventListener('click', ()=>{
+  loggedRole = loggedEmail = loggedUSN = null;
+  dashboards.classList.add('hidden');
+  showSection('home');
+});
+
+/* ---------------------------
+  Student functions: view marks, attendance, complaints, leave
+--------------------------- */
+function ensureStudentExists(usn){
+  if(!studentDB[usn]) {
+    // create a default record with demo marks and empty attendance
+    const marks = {};
+    DEFAULT_SUBJECTS.forEach(s => marks[s] = Math.floor(70 + Math.random()*20));
+    studentDB[usn] = { name: 'Unknown', marks, attendance: [] };
+    save('studentDB', studentDB);
+  }
+}
+
+function loadStudentView(usn){
+  if(!usn) return alert('USN required to load student data');
+  ensureStudentExists(usn);
+  // marks table
+  const tbody = document.querySelector('#stu-marks-table tbody');
+  tbody.innerHTML = '';
+  Object.entries(studentDB[usn].marks).forEach(([sub,mark])=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${sub}</td><td>${mark}</td>`;
+    tbody.appendChild(tr);
+  });
+  // attendance list
+  renderStudentAttendanceList(usn);
+  renderStudentChart(usn);
+}
+
+/* Student view attendance list */
+function renderStudentAttendanceList(usn){
+  const list = document.getElementById('stu-att-list');
+  const stu = studentDB[usn];
+  if(!stu || !stu.attendance || stu.attendance.length===0){ list.textContent = 'No attendance recorded.'; return; }
+  list.innerHTML = stu.attendance.join(', ');
+}
+
+/* Student mark present for a date */
+document.getElementById('stu-add-att-btn').addEventListener('click', ()=>{
+  const d = document.getElementById('stu-add-att').value;
+  if(!d) return alert('Select a date');
+  if(!loggedUSN) return alert('No USN');
+  ensureStudentExists(loggedUSN);
+  studentDB[loggedUSN].attendance = studentDB[loggedUSN].attendance || [];
+  if(!studentDB[loggedUSN].attendance.includes(d)) studentDB[loggedUSN].attendance.push(d);
+  save('studentDB', studentDB);
+  renderStudentAttendanceList(loggedUSN);
+  alert('Marked present: ' + d);
+});
+
+/* Student view attendance % between two dates */
+document.getElementById('stu-view-att').addEventListener('click', ()=>{
+  const from = document.getElementById('stu-att-from').value;
+  const to = document.getElementById('stu-att-to').value;
+  if(!from||!to) return alert('Choose both dates');
+  if(!loggedUSN) return alert('No USN');
+  const pct = computeAttendancePercent(loggedUSN, from, to);
+  document.getElementById('stu-att-result').textContent = `Attendance from ${from} to ${to}: ${pct}% (present recorded days counted)`;
+});
+
+/* Student submit complaint */
+document.getElementById('stu-submit-complaint').addEventListener('click', ()=>{
+  const txt = document.getElementById('stu-complaint').value.trim();
+  if(!txt) return alert('Write complaint');
+  const cat = classifyComplaint(txt);
+  const item = { usn: loggedUSN || 'unknown', text: txt, category: cat, timestamp: Date.now(), by: 'student' };
+  complaints.push(item); save('complaints', complaints);
+  document.getElementById('stu-complaint').value='';
+  alert('Complaint submitted (classified: ' + cat + ')');
+  renderComplaintsTable();
+});
+
+/* Student submit leave */
+document.getElementById('stu-submit-leave').addEventListener('click', ()=>{
+  const s = document.getElementById('stu-leave-start').value;
+  const e = document.getElementById('stu-leave-end').value;
+  const reason = document.getElementById('stu-leave-reason').value.trim();
+  if(!s||!e) return alert('Choose dates');
+  const lr = { usn: loggedUSN || 'unknown', start: s, end: e, reason, by: 'student', timestamp: Date.now() };
+  leaves.push(lr); save('leaveRequests', leaves);
+  document.getElementById('stu-msg').textContent = 'Leave requested';
+  renderLeavesTable();
+});
+
+/* ---------------------------
+  Parent features (fixed)
+--------------------------- */
+function loadParentView(usn){
+  if(!usn) return alert('Parent requires child USN');
+  ensureStudentExists(usn);
+  document.getElementById('par-child-usn').textContent = usn;
+  document.getElementById('par-child-name').textContent = studentDB[usn].name || 'Unknown';
+
+  // ✅ Properly fill marks table
+  const tbody = document.querySelector('#parent-marks tbody');
+  tbody.innerHTML = '';
+  Object.entries(studentDB[usn].marks).forEach(([sub, mark])=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${sub}</td><td>${mark}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* Parent view attendance (simple last 30 days summary) */
+document.getElementById('par-view-att').addEventListener('click', ()=>{
+  if(!loggedUSN) return alert('Parent USN missing');
+  const to = new Date(); const from = new Date(); from.setDate(to.getDate()-29);
+  const fromStr = formatDate(from), toStr = formatDate(to);
+  const pct = computeAttendancePercent(loggedUSN, fromStr, toStr);
+  document.getElementById('par-att-result').textContent = `Attendance (${fromStr} to ${toStr}): ${pct}%`;
+});
+
+/* Parent view marks again (re-renders marks table) */
+document.getElementById('par-view-marks').addEventListener('click', ()=>{
+  loadParentView(loggedUSN);
+});
+
+/* Parent view attendance (simple last 30 days summary) */
+document.getElementById('par-view-att').addEventListener('click', ()=>{
+  if(!loggedUSN) return alert('Parent USN missing');
+  const to = new Date(); const from = new Date(); from.setDate(to.getDate()-29);
+  const fromStr = formatDate(from), toStr = formatDate(to);
+  const pct = computeAttendancePercent(loggedUSN, fromStr, toStr);
+  document.getElementById('par-att-result').textContent = `Attendance (${fromStr} to ${toStr}): ${pct}%`;
+});
+document.getElementById('par-view-marks').addEventListener('click', ()=> loadParentView(loggedUSN));
+
+/* Parent submit complaint */
+document.getElementById('par-submit-complaint').addEventListener('click', ()=>{
+  const txt = document.getElementById('par-complaint').value.trim();
+  if(!txt) return alert('Write complaint');
+  const cat = classifyComplaint(txt);
+  const item = { usn: loggedUSN || 'unknown', text: txt, category: cat, timestamp: Date.now(), by: 'parent' };
+  complaints.push(item); save('complaints', complaints);
+  document.getElementById('par-complaint').value='';
+  alert('Complaint sent (classified: ' + cat + ')');
+  renderComplaintsTable();
+});
+
+/* Parent submit leave */
+document.getElementById('par-submit-leave').addEventListener('click', ()=>{
+  const s = document.getElementById('par-leave-start').value;
+  const e = document.getElementById('par-leave-end').value;
+  const reason = document.getElementById('par-leave-reason').value.trim();
+  if(!s||!e) return alert('Choose dates');
+  const lr = { usn: loggedUSN || 'unknown', start: s, end: e, reason, by: 'parent', timestamp: Date.now() };
+  leaves.push(lr); save('leaveRequests', leaves);
+  document.getElementById('par-msg').textContent = 'Leave request sent';
+  renderLeavesTable();
+});
+
+/* ---------------------------
+  Admin features: create/delete student, CSV upload, search, modify marks & attendance, charts, complaints, leaves
+--------------------------- */
+document.getElementById('adm-create-usn').addEventListener('click', ()=>{
+  const name = document.getElementById('adm-stu-name').value.trim();
+  const usn = document.getElementById('adm-stu-usn').value.trim();
+  if(!name||!usn) return alert('Enter both name and USN');
+  if(studentDB[usn]) return alert('USN exists');
+  const marks = {};
+  DEFAULT_SUBJECTS.forEach(s => marks[s] = Math.floor(70 + Math.random()*20));
+  studentDB[usn] = { name, marks, attendance: [] };
+  save('studentDB', studentDB);
+  document.getElementById('adm-usn-msg').textContent = `Created ${usn} (${name})`;
+  document.getElementById('adm-stu-name').value=''; document.getElementById('adm-stu-usn').value='';
+  renderAdminOverview();
+});
+
+/* delete student */
+document.getElementById('adm-delete-usn').addEventListener('click', ()=>{
+  const usn = document.getElementById('adm-stu-usn').value.trim();
+  if(!usn) return alert('Enter USN to delete');
+  if(!studentDB[usn]) return alert('USN not found');
+  if(!confirm('Delete student ' + usn + ' ?')) return;
+  delete studentDB[usn];
+  save('studentDB', studentDB);
+  document.getElementById('adm-usn-msg').textContent = `Deleted ${usn}`;
+  renderAdminOverview();
+});
+
+/* CSV upload
+ Expected CSV:
+ header row: usn,name,Subject1,Subject2,...,attendance
+ subsequent rows: 2BL20CS001,Alice,78,85,80,82,88,2025-02-01;2025-02-03
+ If subjects present in header, they will be used; otherwise default subjects used.
+*/
+document.getElementById('adm-upload-csv').addEventListener('click', ()=>{
+  const csv = document.getElementById('adm-csv').value.trim();
+  if(!csv) return alert('Paste CSV');
+  const lines = csv.split(/\r?\n/).map(l=>l.trim()).filter(l=>l);
+  const header = lines.shift().split(',').map(h=>h.trim());
+  const hasAttendanceCol = header.includes('attendance');
+  const usnIdx = header.indexOf('usn');
+  const nameIdx = header.indexOf('name');
+  const subjIndices = header.map((h,i)=> ({h,i}) ).filter(o=> o.h !== 'usn' && o.h !== 'name' && o.h !== 'attendance');
+  lines.forEach(line=>{
+    const parts = line.split(',').map(p=>p.trim());
+    const usn = parts[usnIdx];
+    const name = parts[nameIdx] || 'Unknown';
+    const marks = {};
+    if(subjIndices.length>0){
+      subjIndices.forEach(si => { marks[si.h] = Number(parts[si.i] || 0); });
+    } else {
+      // use default subjects: parse next N numbers
+      DEFAULT_SUBJECTS.forEach((s,idx)=> { marks[s] = Number(parts[2+idx] || Math.floor(70 + Math.random()*20)); });
+    }
+    const attendance = [];
+    if(hasAttendanceCol){
+      const a = parts[ header.indexOf('attendance') ];
+      if(a) attendance.push(...a.split(';').map(x=>x.trim()).filter(x=>x));
+    }
+    studentDB[usn] = { name, marks, attendance };
+  });
+  save('studentDB', studentDB);
+  alert('CSV uploaded. Created/updated students: ' + Object.keys(studentDB).length);
+  document.getElementById('adm-csv').value='';
+  renderAdminOverview();
+});
+
+/* Admin search USN */
+document.getElementById('adm-search').addEventListener('click', ()=>{
+  const usn = document.getElementById('adm-search-usn').value.trim();
+  const sec = document.getElementById('adm-marks-section');
+  if(!studentDB[usn]){ alert('Student not found'); sec.classList.add('hidden'); return; }
+  sec.classList.remove('hidden');
+  document.getElementById('adm-selected-usn').textContent = usn;
+  document.getElementById('adm-selected-name').textContent = studentDB[usn].name || '';
+  // populate marks table
+  const tbody = document.querySelector('#adm-marks-table tbody'); tbody.innerHTML = '';
+  Object.entries(studentDB[usn].marks).forEach(([sub,mark])=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${sub}</td><td><input type="number" min="0" max="100" value="${mark}"></td>`;
+    tbody.appendChild(tr);
+  });
+  renderAdminAttendanceList(usn);
+});
+
+/* Save marks (admin) */
+document.getElementById('adm-save-marks').addEventListener('click', ()=>{
+  const usn = document.getElementById('adm-selected-usn').textContent;
+  if(!studentDB[usn]) return alert('Student missing');
+  const rows = document.querySelectorAll('#adm-marks-table tbody tr');
+  rows.forEach(row=>{
+    const sub = row.children[0].textContent;
+    const val = row.children[1].children[0].value;
+    studentDB[usn].marks[sub] = parseInt(val);
+  });
+  save('studentDB', studentDB);
+  alert('Marks saved for ' + usn);
+  renderAdminOverview();
+});
+
+/* Admin attendance list render */
+function renderAdminAttendanceList(usn){
+  const el = document.getElementById('adm-att-list');
+  const stu = studentDB[usn];
+  if(!stu || !stu.attendance || stu.attendance.length===0){ el.textContent = 'No attendance records.'; return; }
+  el.textContent = stu.attendance.join(', ');
+}
+
+/* Admin add presence */
+document.getElementById('adm-add-att-btn').addEventListener('click', ()=>{
+  const d = document.getElementById('adm-add-att').value;
+  const usn = document.getElementById('adm-selected-usn').textContent;
+  if(!d||!usn) return alert('Select date & student');
+  studentDB[usn].attendance = studentDB[usn].attendance || [];
+  if(!studentDB[usn].attendance.includes(d)) studentDB[usn].attendance.push(d);
+  save('studentDB', studentDB);
+  renderAdminAttendanceList(usn);
+  alert('Added presence ' + d);
+});
+
+/* Admin remove presence */
+document.getElementById('adm-remove-att-btn').addEventListener('click', ()=>{
+  const d = document.getElementById('adm-remove-att').value;
+  const usn = document.getElementById('adm-selected-usn').textContent;
+  if(!d||!usn) return alert('Select date & student');
+  studentDB[usn].attendance = (studentDB[usn].attendance || []).filter(x=>x!==d);
+  save('studentDB', studentDB);
+  renderAdminAttendanceList(usn);
+  alert('Removed presence ' + d);
+});
+
+/* ---------------------------
+  Complaints & Leaves admin view
+--------------------------- */
+function renderComplaintsTable(filter='all'){
+  const tbody = document.querySelector('#complaints-table tbody'); tbody.innerHTML = '';
+  const list = complaints.filter(c => filter==='all' ? true : c.category === filter);
+  list.forEach(c=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${c.usn}</td><td>${escapeHtml(c.text)}</td><td>${c.category}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+document.getElementById('complaint-filter').addEventListener('change', (e)=>{
+  renderComplaintsTable(e.target.value);
+});
+
+/* leaves table */
+function renderLeavesTable(){
+  const tbody = document.querySelector('#leaves-table tbody'); tbody.innerHTML = '';
+  leaves.forEach(l=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${l.usn}</td><td>${l.start}</td><td>${l.end}</td><td>${escapeHtml(l.reason)}</td><td>${l.by}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ---------------------------
+  Admin overview charts
+--------------------------- */
+let adminAttChart = null, adminMarksChart = null, stuChart = null;
+function renderAdminOverview(){
+  // attendance % per student (over all recorded semester days)
+  const usns = Object.keys(studentDB);
+  const attPercents = usns.map(u => {
+    const stu = studentDB[u];
+    if(!stu || !stu.attendance) return 0;
+    // compute attendance percent over full recorded timeline: from earliest attendance to latest (if none, 0)
+    if(stu.attendance.length===0) return 0;
+    const dates = stu.attendance.map(d => parseDate(d)).sort((a,b)=>a-b);
+    const from = dates[0], to = dates[dates.length-1];
+    const total = countDaysInclusive(from,to);
+    if(total<=0) return 0;
+    return Math.round((stu.attendance.length/total)*100);
+  });
+  const ctx = document.getElementById('admin-att-chart').getContext('2d');
+  if(adminAttChart) adminAttChart.destroy();
+  adminAttChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: usns, datasets: [{ label: 'Attendance %', data: attPercents }] },
+    options: { responsive: true, scales: { y: { beginAtZero:true, max:100 } } }
+  });
+
+  // average marks per student
+  const avgMarks = usns.map(u => {
+    const vals = Object.values(studentDB[u].marks || {});
+    if(vals.length===0) return 0;
+    return Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+  });
+  const ctx2 = document.getElementById('admin-marks-chart').getContext('2d');
+  if(adminMarksChart) adminMarksChart.destroy();
+  adminMarksChart = new Chart(ctx2, {
+    type: 'line',
+    data: { labels: usns, datasets: [{ label: 'Average Marks', data: avgMarks, fill: true }] },
+    options: { responsive:true, scales: { y:{ beginAtZero:true, max:100 } } }
+  });
+
+  renderComplaintsTable();
+  renderLeavesTable();
+}
+
+/* Student performance chart */
+function renderStudentChart(usn){
+  const ctx = document.getElementById('stu-chart').getContext('2d');
+  if(stuChart) stuChart.destroy();
+  const stu = studentDB[usn];
+  const labels = stu ? Object.keys(stu.marks) : DEFAULT_SUBJECTS;
+  const data = stu ? Object.values(stu.marks) : DEFAULT_SUBJECTS.map(()=>0);
+  stuChart = new Chart(ctx, { type: 'bar', data: { labels, datasets: [{ label:'Marks', data }] }, options:{responsive:true, scales:{y:{beginAtZero:true, max:100}}} });
+}
+
+/* ---------------------------
+  Utility functions
+--------------------------- */
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ---------------------------
+  Initial setup on load
+--------------------------- */
+window.addEventListener('load', ()=>{
+  // if no students exist, create a sample student for demo
+  if(Object.keys(studentDB).length===0){
+    const sampleUSN = '2BL20CS001';
+    const marks = {}; DEFAULT_SUBJECTS.forEach(s=>marks[s]=Math.floor(70+Math.random()*20));
+    studentDB[sampleUSN] = { name:'Alice Student', marks, attendance: [formatDate(new Date())] };
+    save('studentDB', studentDB);
+  }
+  // If logged in from demo click, handle accordingly (none)
+});
+
+/* render complaints + leaves when admin opens dashboard */
+function renderComplaintsTableAndFilter(){
+  renderComplaintsTable(document.getElementById('complaint-filter').value);
+}
+function renderComplaintsTable(){ renderComplaintsTableAndFilter(); }
+
+/* render leaves table */
+function renderLeavesTable(){ const tbody = document.querySelector('#leaves-table tbody'); tbody.innerHTML=''; leaves.forEach(l=>{ const tr=document.createElement('tr'); tr.innerHTML = `<td>${l.usn}</td><td>${l.start}</td><td>${l.end}</td><td>${escapeHtml(l.reason)}</td><td>${l.by}</td>`; tbody.appendChild(tr); }); }
+
+/* Ensure admin overview updates when visiting admin dashboard */
+document.getElementById('open-login').addEventListener('click', ()=>{}); // placeholder
+
+// Keep local references in sync whenever changes are made
+function save(key, obj){ localStorage.setItem(key, JSON.stringify(obj)); if(key==='studentDB') studentDB = obj; if(key==='complaints') complaints = obj; if(key==='leaveRequests') leaves = obj; }
+
+// Also refresh admin charts whenever admin dashboard is shown
+// We attach a small interval to refresh charts while admin is active (lightweight)
+let adminRefreshInterval = null;
+document.getElementById('adm-search').addEventListener('click', ()=>{ renderAdminOverview(); });
+document.getElementById('adm-create-usn').addEventListener('click', ()=>{ renderAdminOverview(); });
+document.getElementById('adm-upload-csv').addEventListener('click', ()=>{ renderAdminOverview(); });
+
+/* Whenever complaints or leaves change, update UI and storage */
+function pushComplaint(item){ complaints.push(item); save('complaints', complaints); renderComplaintsTable(); }
+function pushLeave(item){ leaves.push(item); save('leaveRequests', leaves); renderLeavesTable(); }
+
+/* Ensure persistence functions are consistent */
+function saveStudentDB(){ save('studentDB', studentDB); renderAdminOverview(); }
+
+// ensure admin charts and tables show when admin dashboard displayed
+// detect when adminDash becomes visible — we will call renderAdminOverview on login already
+
+</script>
+</body>
+</html>
